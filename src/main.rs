@@ -2,8 +2,8 @@ extern crate currency;
 
 use std::io;
 use std::io::prelude::*;
-use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fmt;
 
 use currency::Currency;
@@ -77,13 +77,35 @@ fn run<T: Iterator<Item=String>>(lines: T) -> Vec<Debt> {
             }
         ).collect::<Vec<_>>()
     });
-
-    debts.iter().fold(HashMap::new(), |memo, elem| {
-        memo.entry(elem.debtor).or_insert(HashMap::new())
-            .entry(elem.creditor).or_insert(vec![]).push(elem);
+    let deduplicated: Vec<Debt> = debts.fold(HashMap::new(), |mut memo, elem| {
+        memo.entry(elem.debtor.clone()).or_insert(HashMap::new())
+            .entry(elem.creditor.clone()).or_insert(vec![]).push(elem.amount);
         memo
+    })
+    .into_iter()
+    .flat_map(|(debtor, by_creditor)| {
+        by_creditor.into_iter().map(|(creditor, amounts)| {
+            Debt {
+                debtor: debtor.clone(),
+                amount: sum(amounts.into_iter()),
+                creditor: creditor,
+            }
+        })
+        .collect::<Vec<_>>()
+    })
+    .collect();
+
+    let mut by_debtor: Vec<(String, Vec<Debt>)> =
+        deduplicated.into_iter().fold(HashMap::new(), |mut memo, elem| {
+            memo.entry(elem.debtor.clone()).or_insert(vec![]).push(elem);
+            memo
+        }).into_iter().collect();
+    by_debtor.sort_by_key(|elem| {
+        sum(elem.1.iter().map(|e| e.amount.clone())).value().clone()
     });
-    debts.collect()
+
+    vec![]
+    // debts.collect()
 
     // for record in records {
     //     println!("{:?}", record);
@@ -94,55 +116,65 @@ fn run<T: Iterator<Item=String>>(lines: T) -> Vec<Debt> {
     // }
 }
 
+fn sum<I: IntoIterator<Item=Currency>>(amounts: I) -> Currency {
+    amounts.into_iter().fold(Currency::new(), |memo, elem| memo + elem)
+}
+
+// fn sum(amounts: &[Currency]) -> Currency {
+//     amounts.iter().fold(Currency::new(), |memo, elem| memo + elem)
+// }
+
 
 #[cfg(test)]
 mod tests {
-    use currency::Currency;
-    use super::Debt;
+    // use currency::Currency;
+    // use super::Debt;
     use super::run;
 
     #[test]
     fn test_main() {
         let test_data = "S 8.49 F E\nE 16.99";
-        let actual = run(test_data.lines().map(|s| s.to_owned()));
-        println!("");
-        println!("input:\n{}\n", test_data);
-        for debt in actual {
-            println!("{}", debt);
-        }
+        run(test_data.lines().map(|s| s.to_owned()));
+        // let actual = run(test_data.lines().map(|s| s.to_owned()));
+        // println!("");
+        // println!("input:\n{}\n", test_data);
+        // for debt in actual {
+        //     println!("{}", debt);
+        // }
         // assert!(false);
     }
 
     #[test]
     fn test_2() {
-        let test_data =
-            "ada 200
-            kolle 100
-            leila 20
-            billy 10";
-        let actual = run(test_data.lines().map(|s| s.to_owned()));
+        // let test_data =
+        //     "ada 200
+        //     kolle 100
+        //     leila 20
+        //     billy 10";
+        // let actual = run(test_data.lines().map(|s| s.to_owned()));
 
-        println!("\ninput:\n{}\n", test_data);
+        // // println!("\ninput:\n{}\n", test_data);
 
-        for debt in &actual {
-            println!("{}", debt);
-        }
+        // // for debt in &actual {
+        // //     println!("{}", debt);
+        // // }
 
-        fn mk_debt(debtor: &str, amount: &str, creditor: &str) -> Debt {
-            Debt {
-                debtor: debtor.into(),
-                amount: Currency::from_str(amount).unwrap(),
-                creditor: creditor.into()
-            }
-        }
+        // fn mk_debt(debtor: &str, amount: &str, creditor: &str) -> Debt {
+        //     Debt {
+        //         debtor: debtor.into(),
+        //         amount: Currency::from_str(amount).unwrap(),
+        //         creditor: creditor.into()
+        //     }
+        // }
 
-        let expected = vec![
-            mk_debt("billy", "72.5", "ada"),
-            mk_debt("leila", "45", "ada"),
-            mk_debt("leila", "17.5", "kolle"),
-        ];
+        // let expected = vec![
+        //     mk_debt("billy", "72.5", "ada"),
+        //     mk_debt("leila", "45", "ada"),
+        //     mk_debt("leila", "17.5", "kolle"),
+        // ];
 
-        assert_eq!(actual, expected);
+        // assert_eq!(actual, expected);
+
         // DebtResolution("billy", "ada", BigDecimal("72.5")),
         // DebtResolution("leila", "ada", BigDecimal("45")),
         // DebtResolution("leila", "kolle", BigDecimal("17.5"))
