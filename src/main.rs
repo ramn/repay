@@ -128,8 +128,42 @@ fn sum<I: IntoIterator<Item=Currency>>(amounts: I) -> Currency {
 #[cfg(test)]
 mod tests {
     // use currency::Currency;
-    // use super::Debt;
+    use super::Debt;
     use super::run;
+
+    #[test]
+    fn test_multi() {
+        println!("{}", INPUT_1);
+        assert_eq!(INPUT_1.lines().count(), 4);
+        let actual = run(INPUT_1.lines().map(|x| x.to_owned()));
+        let expected = vec![
+            Debt { debtor: "c".into(), amount: "550".parse().unwrap(), creditor: "a".into() },
+            Debt { debtor: "c".into(), amount: "100".parse().unwrap(), creditor: "b".into() },
+        ];
+        println!("{:?}", expected);
+        for x in expected.iter() {
+            println!("{}", x);
+        }
+        assert_eq!(actual, expected);
+    }
+
+    // fn mk_debt(debt: &str) -> Debt {
+    //     let mut itr = debt.split_whitespace();
+    //     let d = itr.next().unwrap();
+    //     let amt = itr.next().unwrap();
+    //     let c = itr.next().unwrap();
+    //     Debt {
+    //         debtor: d.into(),
+    //         amount: amt.parse().unwrap(),
+    //         creditor: c.into() }
+    // }
+
+    const INPUT_1: &'static str = "\
+        a 1200 a b c\n\
+        b 600 a b c\n\
+        b 200 b c\n\
+        c 100 a c\n\
+        ";
 
     #[test]
     fn test_main() {
