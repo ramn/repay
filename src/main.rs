@@ -35,7 +35,7 @@ fn main() {
     run(stdin.lock().lines().map(|s| s.unwrap()));
 }
 
-fn run<T: Iterator<Item=String>>(lines: T) -> Vec<Debt> {
+fn normalize_input<T: Iterator<Item=String>>(lines: T) -> Vec<Record> {
     let records_raw: Vec<Record> = lines.map(|line| {
         let mut tokens = line.split_whitespace();
         Record {
@@ -44,16 +44,13 @@ fn run<T: Iterator<Item=String>>(lines: T) -> Vec<Debt> {
             debtors: tokens.map(|s| s.to_owned()).collect(),
         }
     }).collect();
-
     let participants: Vec<String> =
         records_raw.iter().fold(HashSet::new(), |mut memo, elem| {
             memo.insert(elem.creditor.to_owned());
             memo.extend(elem.debtors.clone());
             memo
         }).into_iter().collect();
-
-
-    let records = records_raw.into_iter().map(|record| {
+    records_raw.into_iter().map(|record| {
         let debtors: Vec<String> =
             if record.debtors.is_empty() {
                 &participants
@@ -63,9 +60,12 @@ fn run<T: Iterator<Item=String>>(lines: T) -> Vec<Debt> {
             .filter(|debtor| debtor != &&record.creditor)
             .cloned().collect();
         Record { debtors: debtors, .. record }
-    });
+    }).collect()
+}
 
-    let debts = records.flat_map(|record| {
+fn run<T: Iterator<Item=String>>(lines: T) -> Vec<Debt> {
+    let records = normalize_input(lines);
+    let debts = records.into_iter().flat_map(|record| {
         let Record { creditor, amount, debtors } = record;
         assert!(debtors.len() > 0);
         let share = amount / debtors.len();
