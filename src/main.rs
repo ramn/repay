@@ -131,6 +131,7 @@ mod tests {
     use super::Debt;
     use super::run;
 
+    #[ignore]
     #[test]
     fn test_multi() {
         println!("{}", INPUT_1);
