@@ -36,7 +36,7 @@ fn main() {
 }
 
 fn normalize_input<T: Iterator<Item=String>>(lines: T) -> Vec<Record> {
-    let records_raw: Vec<Record> = lines.map(|line| {
+    let records: Vec<Record> = lines.map(|line| {
         let mut tokens = line.split_whitespace();
         Record {
             creditor: tokens.next().unwrap().into(),
@@ -45,12 +45,12 @@ fn normalize_input<T: Iterator<Item=String>>(lines: T) -> Vec<Record> {
         }
     }).collect();
     let participants: Vec<String> =
-        records_raw.iter().fold(HashSet::new(), |mut memo, elem| {
+        records.iter().fold(HashSet::new(), |mut memo, elem| {
             memo.insert(elem.creditor.to_owned());
             memo.extend(elem.debtors.clone());
             memo
         }).into_iter().collect();
-    records_raw.into_iter().map(|record| {
+    records.into_iter().map(|record| {
         let debtors: Vec<String> =
             if record.debtors.is_empty() {
                 &participants
