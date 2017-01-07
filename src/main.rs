@@ -76,24 +76,26 @@ fn run<T: Iterator<Item=String>>(lines: T) -> Vec<Debt> {
                     creditor: creditor.clone()
                 }
             ).collect::<Vec<_>>()
-    });
-    let deduplicated: Vec<Debt> = debts.fold(HashMap::new(), |mut memo, elem| {
-        memo.entry(elem.debtor.clone()).or_insert(HashMap::new())
-            .entry(elem.creditor.clone()).or_insert(vec![]).push(elem.amount);
-        memo
-    })
-    .into_iter()
-    .flat_map(|(debtor, by_creditor)| {
-        by_creditor.into_iter().map(|(creditor, amounts)| {
-            Debt {
-                debtor: debtor.clone(),
-                amount: sum(amounts.into_iter()),
-                creditor: creditor,
-            }
+        });
+    let deduplicated: Vec<Debt> =
+        debts.fold(HashMap::new(), |mut memo, elem| {
+            memo.entry(elem.debtor.clone()).or_insert(HashMap::new())
+                .entry(elem.creditor.clone()).or_insert(vec![])
+                .push(elem.amount);
+            memo
         })
-        .collect::<Vec<_>>()
-    })
-    .collect();
+        .into_iter()
+        .flat_map(|(debtor, by_creditor)| {
+            by_creditor.into_iter().map(|(creditor, amounts)| {
+                Debt {
+                    debtor: debtor.clone(),
+                    amount: sum(amounts.into_iter()),
+                    creditor: creditor,
+                }
+            })
+            .collect::<Vec<_>>()
+        })
+        .collect();
 
     let mut by_debtor: Vec<(String, Vec<Debt>)> =
         deduplicated.into_iter().fold(HashMap::new(), |mut memo, elem| {
