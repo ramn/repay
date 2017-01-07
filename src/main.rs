@@ -13,7 +13,7 @@ use currency::Currency;
 struct Record {
     creditor: String,
     amount: Currency,
-    debtors: Vec<String>,
+    debtors: HashSet<String>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -44,14 +44,14 @@ fn normalize_input<T: Iterator<Item=String>>(lines: T) -> Vec<Record> {
             debtors: tokens.map(|s| s.to_owned()).collect(),
         }
     }).collect();
-    let participants: Vec<String> =
+    let participants: HashSet<String> =
         records.iter().fold(HashSet::new(), |mut memo, elem| {
             memo.insert(elem.creditor.to_owned());
             memo.extend(elem.debtors.clone());
             memo
         }).into_iter().collect();
     records.into_iter().map(|record| {
-        let debtors: Vec<String> =
+        let debtors: HashSet<String> =
             if record.debtors.is_empty() {
                 &participants
             } else {
