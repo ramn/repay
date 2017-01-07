@@ -65,8 +65,7 @@ fn normalize_input<T: Iterator<Item=String>>(lines: T) -> Vec<Record> {
 
 fn run<T: Iterator<Item=String>>(lines: T) -> Vec<Debt> {
     let records = normalize_input(lines);
-    let debts = records.into_iter().flat_map(|record| {
-        let Record { creditor, amount, debtors } = record;
+    let debts = records.into_iter().flat_map(| Record { creditor, amount, debtors } | {
         assert!(debtors.len() > 0);
         let share = amount / debtors.len();
         debtors.into_iter().map(|d|
