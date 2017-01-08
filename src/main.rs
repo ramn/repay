@@ -82,6 +82,7 @@ fn str2btree_set(xs: &str) -> BTreeSet<String> {
 }
 
 impl Record {
+    #[allow(dead_code)]
     fn new(creditor: &str, amount: &str, debtors_init: &str) -> Record {
         Record {
             creditor: creditor.into(),
