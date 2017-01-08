@@ -52,7 +52,17 @@ fn normalize_input<T: IntoIterator<Item=String>>(lines: T) -> Vec<Record> {
             memo.extend(elem.debtors.clone());
             memo
         });
-    records.into_iter().map(|record| {
+    let creditors: BTreeSet<String> =
+        records.iter().map(|rec| rec.creditor.clone()).collect();
+    // We need records also for persons with no expenses so they become part of
+    // the calculation further down.
+    let debtors_with_no_credit = participants.difference(&creditors)
+        .map(|debtor| Record {
+            creditor: debtor.clone(),
+            amount: Currency::new(),
+            debtors: BTreeSet::new(),
+        });
+    records.into_iter().chain(debtors_with_no_credit).map(|record| {
         let debtors: BTreeSet<String> =
             if record.debtors.is_empty() {
                 &participants
@@ -360,8 +370,19 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
+    #[test]
+    fn test_only_one_expenser() {
+        let actual = run(to_input("a 100 b"));
+        let expected = vec![mk_debt("b 100 a")];
+        assert_eq!(actual, expected);
+    }
+
+    fn to_input(s: &str) -> Vec<String> {
+        s.lines().map(|x| x.to_owned()).collect()
+    }
+
     fn get_input() -> Vec<String> {
-        INPUT_1.lines().map(|x| x.to_owned()).collect()
+        to_input(INPUT_1)
     }
 
     const INPUT_1: &'static str = "\
@@ -374,5 +395,16 @@ mod tests {
     #[test]
     fn test_input() {
         assert_eq!(INPUT_1.lines().count(), 4);
+    }
+
+    fn mk_debt(debt: &str) -> Debt {
+        let mut itr = debt.split_whitespace();
+        let d = itr.next().unwrap();
+        let amt = itr.next().unwrap();
+        let c = itr.next().unwrap();
+        Debt {
+            debtor: d.into(),
+            amount: amt.parse().unwrap(),
+            creditor: c.into() }
     }
 }
