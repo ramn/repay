@@ -36,14 +36,16 @@ fn main() {
 }
 
 fn normalize_input<T: IntoIterator<Item=String>>(lines: T) -> Vec<Record> {
-    let records: Vec<Record> = lines.into_iter().map(|line| {
-        let mut tokens = line.split_whitespace();
-        Record {
-            creditor: tokens.next().unwrap().into(),
-            amount: tokens.next().unwrap().parse().unwrap(),
-            debtors: tokens.map(|s| s.to_owned()).collect(),
-        }
-    }).collect();
+    let records: Vec<Record> = lines.into_iter()
+        .filter(|s| !s.is_empty())
+        .map(|line| {
+            let mut tokens = line.split_whitespace();
+            Record {
+                creditor: tokens.next().unwrap().into(),
+                amount: tokens.next().unwrap().parse().unwrap(),
+                debtors: tokens.map(|s| s.to_owned()).collect(),
+            }
+        }).collect();
     let participants: BTreeSet<String> =
         records.iter().fold(BTreeSet::new(), |mut memo, elem| {
             memo.insert(elem.creditor.to_owned());
@@ -265,6 +267,18 @@ mod tests {
             Record::new("b", "600", "a b c"),
             Record::new("b", "200", "b c"),
             Record::new("c", "100", "a c"),
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_normalize_input_no_debtors() {
+        let actual = normalize_input(
+            "a 100\nb 100\n\n"
+            .lines().map(|x|x.to_owned()));
+        let expected = vec![
+            Record::new("a", "100", "a b"),
+            Record::new("b", "100", "a b"),
         ];
         assert_eq!(actual, expected);
     }
