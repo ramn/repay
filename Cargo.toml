@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["ramn <github@rymdimperiet.org>"]
 
 [dependencies]
-currency = "0.4.0"
+ramn-currency = "0.4.0"
 # steel-cent = "0.2.0"
