@@ -59,7 +59,6 @@ fn normalize_input<T: IntoIterator<Item=String>>(lines: T) -> Vec<Record> {
             } else {
                 &record.debtors
             }.iter()
-            // .filter(|debtor| debtor != &&record.creditor)
             .cloned().collect();
         Record { debtors: debtors, .. record }
     }).collect()
