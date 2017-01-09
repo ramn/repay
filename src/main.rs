@@ -168,17 +168,9 @@ impl Records {
     fn calc_debt_per_person(&self) -> BTreeMap<String, Currency> {
         let share_per_person_and_group =
             self.calc_share_per_person_and_group();
-        println!("share_per_person");
-        for (ref k, ref v) in share_per_person_and_group.iter() {
-            print!("{:?}:", k);
-            for (k, v) in v.iter() {
-                print!(" {}: {},", k, v);
-            }
-            println!();
-        }
         let expenses_per_person_group =
             self.calc_expenses_per_person_and_group();
-        let out = share_per_person_and_group.into_iter()
+        share_per_person_and_group.into_iter()
             .map(|(group, share_per_person)| {
                 let expenses_per_person =
                     expenses_per_person_group.get(&group).unwrap();
@@ -196,12 +188,6 @@ impl Records {
                 }
                 memo
             })
-            ;
-        println!("Debts by group calculation");
-        for (ref k, ref v) in out.iter() {
-            println!("{}, {}", k, v);
-        }
-        out
     }
 
     fn calc_debt_resolution(&self) -> Vec<Debt> {
@@ -222,17 +208,12 @@ impl Records {
             d.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
             d
         };
-        let out: Vec<_> = debt_per_person_by_debt.into_iter()
+        debt_per_person_by_debt.into_iter()
             .flat_map(|(person, debt)| self.resolve_for_person(
                     &person,
                     &debt,
                     &mut expense_per_person))
-            .collect();
-        println!("Debt resolution:");
-        for x in out.iter() {
-            println!("{}", x);
-        }
-        out
+            .collect()
     }
 
     fn resolve_for_person(
@@ -241,17 +222,11 @@ impl Records {
         debt: &Currency,
         expense_per_person: &mut [(String, Currency)]
     ) -> Vec<Debt> {
-        print!("resolve_for_person, expense_per_person: ");
-        for &(ref k, ref v) in expense_per_person.iter() {
-            print!(" {}: {},", k, v );
-        }
-        println!("\nCurrent person: {}", &person);
         let mut debt = debt.clone();
         let mut payouts = vec![];
         let zero: Currency = parse("0");
         let mut last_debt = zero.clone();
         while &debt != &last_debt && &debt != &zero {
-            println!("in loop, last_debt: {}, debt: {}", &last_debt, &debt);
             last_debt = debt.clone();
             let pos_opt = expense_per_person.iter()
                 .position(|x| x.0 != person && &x.1 < &zero);
@@ -413,10 +388,6 @@ mod tests {
     fn test_calc_debt_resolution() {
         let records = Records::new(get_input());
         let actual = records.calc_debt_resolution();
-        println!("debt resolution:");
-        for debt in actual.iter() {
-            println!("{}", debt);
-        }
         let expected = vec![
             Debt {
                 debtor: "c".into(), amount: parse("550"), creditor: "a".into()
