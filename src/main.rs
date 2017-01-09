@@ -110,42 +110,11 @@ impl Records {
         Records { records: normalize_input(records_init) }
     }
 
-    fn unique_people(&self) -> BTreeSet<String> {
-        self.records.iter().fold(BTreeSet::new(), |mut memo, elem| {
-            memo.insert(elem.creditor.clone());
-            memo
-        })
-    }
-
-    fn calc_share_per_group(&self) -> BTreeMap<BTreeSet<String>, Currency> {
-        let mut share_per_group =
-            self.records.iter().fold(BTreeMap::new(), |mut memo, elem| {
-                memo.entry(elem.debtors.clone()).or_insert(Currency::new());
-                memo
-            });
-        for (group, share) in share_per_group.iter_mut() {
-            let amounts: Vec<_> = self.records.iter()
-                .filter(|&record| record.debtors == *group)
-                .map(|record| record.amount.clone())
-                .collect();
-            *share = sum(amounts.iter()) / group.len();
-        };
-        share_per_group
-    }
-
-    fn calc_share_per_person(&self) -> BTreeMap<String, Currency> {
-        let share_per_group = self.calc_share_per_group();
-        self.unique_people().into_iter().map(|person| {
-            let share = sum(
-                share_per_group.iter()
-                .filter(|&(key, _value)| key.contains(&person))
-                .map(|(_key, value)| value));
-            (person, share)
-        }).collect()
-    }
-
-    fn calc_expenses_per_person(&self) -> BTreeMap<String, Currency> {
-        self.records.iter().fold(BTreeMap::new(), |mut memo, record| {
+    fn calc_expenses_per_person2<R: AsRef<Record>>(
+        records: &[R]
+    ) -> BTreeMap<String, Currency> {
+        records.iter().fold(BTreeMap::new(), |mut memo, record| {
+            let record = record.as_ref();
             {
                 let amount = memo.entry(record.creditor.clone())
                     .or_insert(Currency::new());
@@ -155,19 +124,88 @@ impl Records {
         })
     }
 
-    fn calc_debt_per_person(&self) -> BTreeMap<String, Currency> {
-        let share_per_person = self.calc_share_per_person();
-        let expenses_per_person = self.calc_expenses_per_person();
-        share_per_person.into_iter().map(|(person, share)| {
-            let debt = share - expenses_per_person.get(&person)
-                .unwrap_or(&Currency::new());
-            (person, debt)
+    fn calc_expenses_per_person_and_group(
+        &self
+    ) -> BTreeMap<BTreeSet<String>, BTreeMap<String, Currency>> {
+        self.records_by_group().iter().map(|(group, records)| {
+            (group.clone(), Self::calc_expenses_per_person2(records))
         }).collect()
+    }
+
+    fn calc_share(records: &[&Record], group_size: usize) -> Currency {
+        sum(records.iter().map(|r| &r.amount)) / group_size
+    }
+
+    fn calc_share_per_person_and_group(
+        &self
+    ) -> BTreeMap<BTreeSet<String>, BTreeMap<String, Currency>> {
+        self.records_by_group().iter().map(|(group, records)| {
+            let share = Self::calc_share(&records, group.len());
+            let share_per_person = records.iter()
+                .flat_map(|rec| rec.debtors.iter()
+                    .map(|debtor| (debtor.clone(), share.clone())))
+                .collect();
+            (group.clone(), share_per_person)
+        }).collect()
+    }
+
+    fn records_by_group(&self) -> BTreeMap<BTreeSet<String>, Vec<&Record>> {
+        self.records.iter().fold(BTreeMap::new(), |mut memo, elem| {
+            memo.entry(elem.debtors.clone()).or_insert(vec![]).push(&elem);
+            memo
+        })
+    }
+
+    fn expenses_creditor_not_part_of_group(
+        &self
+    ) -> BTreeMap<String, Currency> {
+        self.records.iter()
+            .filter(|&rec| !rec.debtors.contains(&rec.creditor))
+            .map(|rec| (rec.creditor.clone(), rec.amount.clone() * -1))
+            .collect()
+    }
+
+    fn calc_debt_per_person(&self) -> BTreeMap<String, Currency> {
+        let share_per_person_and_group =
+            self.calc_share_per_person_and_group();
+        println!("share_per_person");
+        for (ref k, ref v) in share_per_person_and_group.iter() {
+            print!("{:?}:", k);
+            for (k, v) in v.iter() {
+                print!(" {}: {},", k, v);
+            }
+            println!();
+        }
+        let expenses_per_person_group =
+            self.calc_expenses_per_person_and_group();
+        let out = share_per_person_and_group.into_iter()
+            .map(|(group, share_per_person)| {
+                let expenses_per_person =
+                    expenses_per_person_group.get(&group).unwrap();
+                share_per_person.into_iter().map(|(person, share)| {
+                    let debt = share - expenses_per_person.get(&person)
+                        .unwrap_or(&Currency::new());
+                    (person.clone(), debt)
+                }).collect::<BTreeMap<String, Currency>>()
+            })
+            .chain(vec![self.expenses_creditor_not_part_of_group()].into_iter())
+            .fold(BTreeMap::new(), |mut memo, debt_per_person| {
+                for (person, debt) in debt_per_person {
+                    let debt_acc = memo.entry(person).or_insert(Currency::new());
+                    *debt_acc = debt_acc.clone() + debt;
+                }
+                memo
+            })
+            ;
+        println!("Debts by group calculation");
+        for (ref k, ref v) in out.iter() {
+            println!("{}, {}", k, v);
+        }
+        out
     }
 
     fn calc_debt_resolution(&self) -> Vec<Debt> {
         let debt_per_person = self.calc_debt_per_person();
-
         let debt_per_person_by_debt = {
             let mut d: Vec<(String, Currency)> = debt_per_person.iter()
                 .map(|(k, v)| (k.clone(), v.clone()))
@@ -184,12 +222,17 @@ impl Records {
             d.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
             d
         };
-        debt_per_person_by_debt.into_iter()
+        let out: Vec<_> = debt_per_person_by_debt.into_iter()
             .flat_map(|(person, debt)| self.resolve_for_person(
                     &person,
                     &debt,
                     &mut expense_per_person))
-            .collect()
+            .collect();
+        println!("Debt resolution:");
+        for x in out.iter() {
+            println!("{}", x);
+        }
+        out
     }
 
     fn resolve_for_person(
@@ -198,10 +241,18 @@ impl Records {
         debt: &Currency,
         expense_per_person: &mut [(String, Currency)]
     ) -> Vec<Debt> {
+        print!("resolve_for_person, expense_per_person: ");
+        for &(ref k, ref v) in expense_per_person.iter() {
+            print!(" {}: {},", k, v );
+        }
+        println!("\nCurrent person: {}", &person);
         let mut debt = debt.clone();
         let mut payouts = vec![];
-        let zero = parse("0");
-        while debt > zero {
+        let zero: Currency = parse("0");
+        let mut last_debt = zero.clone();
+        while &debt != &last_debt && &debt != &zero {
+            println!("in loop, last_debt: {}, debt: {}", &last_debt, &debt);
+            last_debt = debt.clone();
             let pos_opt = expense_per_person.iter()
                 .position(|x| x.0 != person && &x.1 < &zero);
             if let Some(pos) = pos_opt {
@@ -217,7 +268,7 @@ impl Records {
                     debt = zero.clone();
                 }
             } else {
-                unreachable!("Should always find a creditor");
+                break;
             }
         }
         payouts.into_iter().map(|(creditor, amount)|
@@ -243,6 +294,12 @@ impl fmt::Display for Record {
 impl fmt::Display for Debt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} owes {} {}", self.debtor, self.creditor, self.amount)
+    }
+}
+
+impl AsRef<Record> for Record {
+    fn as_ref(&self) -> &Record {
+        &self
     }
 }
 
@@ -293,38 +350,49 @@ mod tests {
     }
 
     #[test]
-    fn test_calc_share_per_group() {
+    fn test_calc_share_per_person_and_group() {
         let records = Records::new(get_input());
-        let actual = records.calc_share_per_group();
+        let actual = records.calc_share_per_person_and_group();
         assert_eq!(3, actual.len());
         let expected = vec![
-            (str2btree_set("a b c"), parse("600")),
-            (str2btree_set("a c"), parse("50")),
-            (str2btree_set("b c"), parse("100")),
+            (str2btree_set("a b c"),
+                vec![
+                    ("a".into(), parse("600")),
+                    ("b".into(), parse("600")),
+                    ("c".into(), parse("600"))
+                ].into_iter().collect()),
+            (str2btree_set("a c"),
+                vec![
+                    ("a".into(), parse("50")),
+                    ("c".into(), parse("50")),
+                ].into_iter().collect()),
+            (str2btree_set("b c"),
+                vec![
+                    ("b".into(), parse("100")),
+                    ("c".into(), parse("100")),
+                ].into_iter().collect()),
         ].into_iter().collect();
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn test_calc_share_per_person() {
+    fn test_calc_expenses_per_person_and_group() {
         let records = Records::new(get_input());
-        let actual = records.calc_share_per_person();
+        let actual = records.calc_expenses_per_person_and_group();
         let expected = vec![
-            ("a".into(), parse("650")),
-            ("b".into(), parse("700")),
-            ("c".into(), parse("750")),
-        ].into_iter().collect();
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_calc_expenses_per_person() {
-        let records = Records::new(get_input());
-        let actual = records.calc_expenses_per_person();
-        let expected = vec![
-            ("a".into(), parse("1200")),
-            ("b".into(), parse("800")),
-            ("c".into(), parse("100")),
+            (str2btree_set("a b c"),
+                vec![
+                    ("a".into(), parse("1200")),
+                    ("b".into(), parse("600")),
+                ].into_iter().collect()),
+            (str2btree_set("a c"),
+                vec![
+                    ("c".into(), parse("100")),
+                ].into_iter().collect()),
+            (str2btree_set("b c"),
+                vec![
+                    ("b".into(), parse("200")),
+                ].into_iter().collect()),
         ].into_iter().collect();
         assert_eq!(actual, expected);
     }
@@ -345,6 +413,10 @@ mod tests {
     fn test_calc_debt_resolution() {
         let records = Records::new(get_input());
         let actual = records.calc_debt_resolution();
+        println!("debt resolution:");
+        for debt in actual.iter() {
+            println!("{}", debt);
+        }
         let expected = vec![
             Debt {
                 debtor: "c".into(), amount: parse("550"), creditor: "a".into()
@@ -374,6 +446,13 @@ mod tests {
     fn test_only_one_expenser() {
         let actual = run(to_input("a 100 b"));
         let expected = vec![mk_debt("b 100 a")];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_a_to_b_and_b_to_c() {
+        let actual = run(to_input("a 100 b\nb 50 c"));
+        let expected = vec![mk_debt("b 50 a"), mk_debt("c 50 a")];
         assert_eq!(actual, expected);
     }
 
