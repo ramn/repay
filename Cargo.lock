@@ -1,5 +1,5 @@
 [root]
-name = "get-money-back"
+name = "repay"
 version = "0.1.0"
 dependencies = [
  "ramn-currency 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -1,5 +1,5 @@
 [package]
-name = "get-money-back"
+name = "repay"
 version = "0.1.0"
 authors = ["ramn <github@rymdimperiet.org>"]
 
