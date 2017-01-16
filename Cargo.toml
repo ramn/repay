@@ -1,6 +1,6 @@
 [package]
 name = "repay"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["ramn <github@rymdimperiet.org>"]
 description = "CLI for calculating repayments"
 
