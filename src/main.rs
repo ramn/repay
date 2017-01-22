@@ -132,7 +132,7 @@ impl Records {
             let record = record.as_ref();
             {
                 let amount = memo.entry(record.creditor.clone())
-                    .or_insert(Currency::new());
+                    .or_insert_with(Currency::new);
                 *amount = amount.clone() + &record.amount;
             }
             memo
@@ -155,7 +155,7 @@ impl Records {
         &self
     ) -> BTreeMap<BTreeSet<String>, BTreeMap<String, Currency>> {
         self.records_by_group().iter().map(|(group, records)| {
-            let share = Self::calc_share(&records, group.len());
+            let share = Self::calc_share(records, group.len());
             let share_per_person = records.iter()
                 .flat_map(|rec| rec.debtors.iter()
                     .map(|debtor| (debtor.clone(), share.clone())))
@@ -166,7 +166,9 @@ impl Records {
 
     fn records_by_group(&self) -> BTreeMap<BTreeSet<String>, Vec<&Record>> {
         self.records.iter().fold(BTreeMap::new(), |mut memo, elem| {
-            memo.entry(elem.debtors.clone()).or_insert(vec![]).push(&elem);
+            memo.entry(elem.debtors.clone())
+                .or_insert_with(||vec![])
+                .push(elem);
             memo
         })
     }
@@ -187,8 +189,7 @@ impl Records {
             self.calc_expenses_per_person_and_group();
         share_per_person_and_group.into_iter()
             .map(|(group, share_per_person)| {
-                let expenses_per_person =
-                    expenses_per_person_group.get(&group).unwrap();
+                let expenses_per_person = &expenses_per_person_group[&group];
                 share_per_person.into_iter().map(|(person, share)| {
                     let debt = share - expenses_per_person.get(&person)
                         .unwrap_or(&Currency::new());
@@ -198,7 +199,8 @@ impl Records {
             .chain(vec![self.expenses_creditor_not_part_of_group()].into_iter())
             .fold(BTreeMap::new(), |mut memo, debt_per_person| {
                 for (person, debt) in debt_per_person {
-                    let debt_acc = memo.entry(person).or_insert(Currency::new());
+                    let debt_acc = memo.entry(person)
+                        .or_insert_with(Currency::new);
                     *debt_acc = debt_acc.clone() + debt;
                 }
                 memo
@@ -288,9 +290,7 @@ impl fmt::Display for Debt {
 }
 
 impl AsRef<Record> for Record {
-    fn as_ref(&self) -> &Record {
-        &self
-    }
+    fn as_ref(&self) -> &Record { self }
 }
 
 
