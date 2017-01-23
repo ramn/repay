@@ -12,5 +12,4 @@ license = "MIT/Apache-2.0"
 keywords = ["repay", "money", "cli"]
 
 [dependencies]
-ramn-currency = "0.4.1"
-# steel-cent = "0.2.0"
+num = "0.1"
