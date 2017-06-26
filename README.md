@@ -21,3 +21,8 @@ Links
 
  * [Crate](https://crates.io/crates/repay)
  * [Documentation](https://docs.rs/repay)
+
+TODO
+----
+
+ * Support semicolon as separator in addition to newline
