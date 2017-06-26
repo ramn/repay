@@ -6,8 +6,6 @@ CLI for calculating repayments
 Example
 -------
 
-    cargo install repay
-
     repay <<HERE
     a 150
     b 300
