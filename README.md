@@ -22,7 +22,14 @@ Links
  * [Crate](https://crates.io/crates/repay)
  * [Documentation](https://docs.rs/repay)
 
+How to install
+--------------
+Download from
+[https://github.com/ramn/repay/releases](https://github.com/ramn/repay/releases)
+or run `cargo install repay`.
+
 TODO
 ----
 
- * Support semicolon as separator in addition to newline
+  * Support semicolon as separator in addition to newline
+  * Support -h flag
