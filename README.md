@@ -31,3 +31,4 @@ TODO
 
   * Support semicolon as separator in addition to newline
   * Support -h flag
+  * Support comments the way Bash does it, from #, skip the rest of the line.
