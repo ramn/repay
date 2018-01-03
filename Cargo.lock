@@ -1,10 +1,3 @@
-[root]
-name = "repay"
-version = "0.1.2"
-dependencies = [
- "num 0.1.36 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
 [[package]]
 name = "libc"
 version = "0.2.18"
@@ -82,6 +75,13 @@ version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.18 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "repay"
+version = "0.2.0"
+dependencies = [
+ "num 0.1.36 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

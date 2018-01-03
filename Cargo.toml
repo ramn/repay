@@ -1,6 +1,6 @@
 [package]
 name = "repay"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["ramn <github@rymdimperiet.org>"]
 description = "CLI for calculating repayments"
 
@@ -13,3 +13,7 @@ keywords = ["repay", "money", "cli"]
 
 [dependencies]
 num = "0.1"
+
+[[bin]]
+name = "repay"
+doc = false

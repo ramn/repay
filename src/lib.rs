@@ -1,7 +1,9 @@
+//! CLI documentation
+//! =================
+//!
 //! Example usage:
 //!
-//!
-//! ```
+//! ```bash
 //! $ cargo install repay
 //!
 //! $ repay <<HERE
@@ -12,13 +14,29 @@
 //! c owes b 100.00
 //! a owes b 50.00
 //! ```
+//!
+//! Library documentation
+//! =====================
+//!
+//! Example usage:
+//!
+//! ```
+//! extern crate repay;
+//!
+//! let input =
+//!     "a 150
+//!     b 300
+//!     c 100 c a";
+//! let result = repay::run(input.lines().map(str::to_owned));
+//! assert_eq!(2, result.len());
+//! assert_eq!("c owes b 100.00", format!("{}", result[0]));
+//! assert_eq!("a owes b 50.00", format!("{}", result[1]));
+//! ```
 
 extern crate num;
 
 mod money;
 
-use std::io;
-use std::io::prelude::*;
 use std::collections::BTreeSet;
 use std::collections::BTreeMap;
 use std::fmt;
@@ -37,17 +55,14 @@ struct Records {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-struct Debt {
-    debtor: String,
-    amount: Money,
-    creditor: String,
+pub struct Debt {
+    pub debtor: String,
+    pub amount: Money,
+    pub creditor: String,
 }
 
-fn main() {
-    let stdin = io::stdin();
-    for debt in run(stdin.lock().lines().map(|s| s.unwrap())) {
-        println!("{}", debt);
-    }
+pub fn run<T: IntoIterator<Item=String>>(lines: T) -> Vec<Debt> {
+    Records::new(lines).calc_debt_resolution()
 }
 
 fn normalize_input<T: IntoIterator<Item=String>>(lines: T) -> Vec<Record> {
@@ -87,10 +102,6 @@ fn normalize_input<T: IntoIterator<Item=String>>(lines: T) -> Vec<Record> {
             .cloned().collect();
         Record { debtors: debtors, .. record }
     }).collect()
-}
-
-fn run<T: IntoIterator<Item=String>>(lines: T) -> Vec<Debt> {
-    Records::new(lines).calc_debt_resolution()
 }
 
 fn sum<'a, I>(amounts: I) -> Money
