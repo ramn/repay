@@ -1,5 +1,7 @@
 Repay
 =====
+[![crates.io](http://meritbadge.herokuapp.com/repay)](https://crates.io/crates/repay)
+[![Docs](https://docs.rs/repay/badge.svg)](http://docs.rs/repay)
 
 CLI for calculating repayments
 
@@ -13,12 +15,6 @@ Example
     HERE
     c owes b 100.00
     a owes b 50.00
-
-Links
------
-
- * [Crate](https://crates.io/crates/repay)
- * [Documentation](https://docs.rs/repay)
 
 How to install
 --------------
