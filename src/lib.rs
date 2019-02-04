@@ -488,6 +488,34 @@ mod tests {
         assert_eq!(expected, actual);
     }
 
+    #[test]
+    fn test_buggy_case() {
+        let input = to_input(
+            "
+            d 291 b
+            d 286 a
+            d 301 c
+            d 393 d e
+            b 1965 e b d a c",
+        );
+        let actual = stringify(run(input.clone()));
+
+        eprintln!("{:?}\n\n", normalize_input(input));
+        eprintln!("{:?}", actual);
+
+        let expected = [
+            "c owes b 694",
+            "e owes d 589,5",
+            "a owes b 485",
+            "a owes d 194",
+            "d owes b 102",
+        ];
+
+        assert_eq!(expected, &actual[..]);
+
+        assert!(false);
+    }
+
     fn to_input(s: &str) -> Vec<String> {
         s.lines().map(|x| x.to_owned()).collect()
     }
