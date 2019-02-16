@@ -41,7 +41,7 @@ use std::collections::BTreeSet;
 use std::collections::BTreeMap;
 use std::fmt;
 
-use money::{Money};
+use crate::money::Money;
 
 #[derive(Debug, PartialEq, Eq)]
 struct Record {

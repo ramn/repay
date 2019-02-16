@@ -3,6 +3,7 @@ name = "repay"
 version = "0.2.0"
 authors = ["ramn <github@rymdimperiet.org>"]
 description = "CLI for calculating repayments"
+edition = "2018"
 
 documentation = "https://docs.rs/repay"
 homepage = "https://github.com/ramn/repay"
