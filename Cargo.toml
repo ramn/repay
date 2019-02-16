@@ -15,6 +15,9 @@ keywords = ["repay", "money", "cli"]
 [dependencies]
 num = "0.1"
 
+[dev-dependencies]
+pretty_assertions = "0.5.1"
+
 [[bin]]
 name = "repay"
 doc = false

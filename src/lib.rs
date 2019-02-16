@@ -33,7 +33,9 @@
 //! assert_eq!("a owes b 50.00", format!("{}", result[1]));
 //! ```
 
-extern crate num;
+#[cfg(test)]
+#[macro_use]
+extern crate pretty_assertions;
 
 mod money;
 
