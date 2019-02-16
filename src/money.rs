@@ -21,7 +21,7 @@ pub fn to_float(m: &Money) -> f64 {
 pub fn parse(s: &str) -> Money {
     match s.parse::<f64>() {
         Ok(f) => BigRational::from_float(f).unwrap(),
-        _ => s.parse().unwrap()
+        _ => s.parse().unwrap(),
     }
 }
 
