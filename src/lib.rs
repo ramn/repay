@@ -514,8 +514,6 @@ mod tests {
         ];
 
         assert_eq!(expected, &actual[..]);
-
-        assert!(false);
     }
 
     fn to_input(s: &str) -> Vec<String> {
