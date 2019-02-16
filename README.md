@@ -19,7 +19,7 @@ Example
 How to install
 --------------
 Download from
-[https://github.com/ramn/repay/releases](https://github.com/ramn/repay/releases)
+[`https://github.com/ramn/repay/releases`](https://github.com/ramn/repay/releases)
 or run `cargo install repay`.
 
 TODO
