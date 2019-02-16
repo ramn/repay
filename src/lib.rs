@@ -518,7 +518,6 @@ mod tests {
         ];
         repay_calc.sort_by_key(|debt| (&debt.amount * money::from(-1), debt.debtor.clone()));
         let actual = stringify(repay_calc);
-        eprintln!("{:?}", actual);
         assert_eq!(expected, &actual[..]);
     }
 
