@@ -13,7 +13,7 @@ license = "MIT/Apache-2.0"
 keywords = ["repay", "money", "cli"]
 
 [dependencies]
-num = "0.1"
+num = "0.2.0"
 
 [dev-dependencies]
 pretty_assertions = "0.5.1"
