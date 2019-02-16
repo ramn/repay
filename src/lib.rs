@@ -500,10 +500,15 @@ mod tests {
             d 393 d e
             b 1965 e b d a c",
         );
-        let actual = stringify(run(input.clone()));
+        let repay_calc = run(input.clone());
+        let actual_sum: f64 = repay_calc.iter().map(|x| money::to_float(&x.amount)).sum();
+        let actual = stringify(repay_calc);
 
         eprintln!("{:?}\n\n", normalize_input(input));
         eprintln!("{:?}", actual);
+
+        let expected_sum: f64 = [694.0, 589.5, 485.0, 194.0, 102.0,].iter().sum();
+        assert_eq!(expected_sum, actual_sum);
 
         let expected = [
             "c owes b 694",
