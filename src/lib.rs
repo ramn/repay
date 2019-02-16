@@ -502,24 +502,20 @@ mod tests {
             d 393 d e
             b 1965 e b d a c",
         );
-        let repay_calc = run(input.clone());
+        let mut repay_calc = run(input.clone());
         let actual_sum: f64 = repay_calc.iter().map(|x| money::to_float(&x.amount)).sum();
-        let actual = stringify(repay_calc);
-
-        eprintln!("{:?}\n\n", normalize_input(input));
-        eprintln!("{:?}", actual);
-
-        let expected_sum: f64 = [694.0, 589.5, 485.0, 194.0, 102.0,].iter().sum();
+        let expected_sum: f64 = [694.0, 589.5, 587.0, 92.0].iter().sum();
         assert_eq!(expected_sum, actual_sum);
 
         let expected = [
-            "c owes b 694",
-            "e owes d 589,5",
-            "a owes b 485",
-            "a owes d 194",
-            "d owes b 102",
+            "c owes b 694.00",
+            "e owes d 589.50",
+            "a owes b 587.00",
+            "a owes d 92.00",
         ];
-
+        repay_calc.sort_by_key(|debt| (&debt.amount * money::from(-1), debt.debtor.clone()));
+        let actual = stringify(repay_calc);
+        eprintln!("{:?}", actual);
         assert_eq!(expected, &actual[..]);
     }
 
