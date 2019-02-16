@@ -130,7 +130,9 @@ impl Records {
     }
 
     fn calc_expenses_per_person2<R: AsRef<Record>>(records: &[R]) -> BTreeMap<String, Money> {
-        records.iter().fold(BTreeMap::new(), |mut memo, record| {
+        records.iter()
+            .filter(|record| record.as_ref().amount != money::zero())
+            .fold(BTreeMap::new(), |mut memo, record| {
             let record = record.as_ref();
             {
                 let amount = memo
