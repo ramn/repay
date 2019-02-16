@@ -190,8 +190,11 @@ impl Records {
         self.records
             .iter()
             .filter(|&rec| !rec.debtors.contains(&rec.creditor))
-            .map(|rec| (rec.creditor.clone(), rec.amount.clone() * money::from(-1)))
-            .collect()
+            .fold(Default::default(), |mut memo, record| {
+                let entry = memo.entry(record.creditor.clone()).or_insert(money::zero());
+                *entry = &*entry + &record.amount * money::from(-1);
+                memo
+            })
     }
 
     fn calc_debt_per_person(&self) -> BTreeMap<String, Money> {
