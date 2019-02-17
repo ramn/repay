@@ -21,3 +21,6 @@ pretty_assertions = "0.5.1"
 [[bin]]
 name = "repay"
 doc = false
+
+[workspace]
+members = ["repay-cgi"]
