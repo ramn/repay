@@ -24,3 +24,21 @@ docker run --restart=always -d \
   -v "$PWD":/usr/lib/cgi-bin \
   cgirunner:latest
 ```
+
+Set up Apache to reverse proxy to the docker container
+------------------------------------------------------
+
+```
+# Save in a file:
+# /etc/apache2/sites-enabled/my-cgi-proxy.conf
+
+<VirtualHost *:80>
+        ServerName example.com
+        ProxyPass "/" "http://localhost:8080/"
+
+        ErrorLog ${APACHE_LOG_DIR}/error-example.com.log
+        LogLevel warn
+        CustomLog ${APACHE_LOG_DIR}/access-example.com.log combined
+        ServerSignature On
+</VirtualHost>
+```
