@@ -18,7 +18,7 @@ the host OS is rebooted.
 
 ```bash
 docker run --restart=always -d \
-  -p 8080:80 \
+  -p 127.0.0.1:8080:80 \
   --hostname example.com \
   --name cgirunner \
   -v "$PWD":/usr/lib/cgi-bin \
