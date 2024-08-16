@@ -68,18 +68,23 @@ pub fn run<T: IntoIterator<Item = String>>(lines: T) -> Vec<Debt> {
 }
 
 fn normalize_input<T: IntoIterator<Item = String>>(lines: T) -> Vec<Record> {
-    let records: Vec<Record> = lines
-        .into_iter()
-        .filter(|s| !s.is_empty())
-        .map(|line| {
-            let mut tokens = line.split_whitespace();
-            Record {
-                creditor: tokens.next().unwrap().into(),
-                amount: money::parse(tokens.next().unwrap()),
-                debtors: tokens.map(|s| s.to_owned()).collect(),
-            }
-        })
-        .collect();
+    let mut records = Vec::<Record>::default();
+    let mut lines = lines.into_iter().filter(|s| !s.is_empty());
+    while let Some(line) = lines.next() {
+        let mut tokens = line.split_whitespace().take_while(|&token| token != "#");
+        let Some(creditor) = tokens.next() else {
+            continue;
+        };
+        let Some(amount) = tokens.next() else {
+            continue;
+        };
+        let r = Record {
+            creditor: creditor.into(),
+            amount: money::parse(amount),
+            debtors: tokens.map(|s| s.to_owned()).collect(),
+        };
+        records.push(r);
+    }
     let participants: BTreeSet<String> = records.iter().fold(BTreeSet::new(), |mut memo, elem| {
         memo.insert(elem.creditor.to_owned());
         memo.extend(elem.debtors.clone());
@@ -130,18 +135,19 @@ impl Records {
     }
 
     fn calc_expenses_per_person2<R: AsRef<Record>>(records: &[R]) -> BTreeMap<String, Money> {
-        records.iter()
+        records
+            .iter()
             .filter(|record| record.as_ref().amount != money::zero())
             .fold(BTreeMap::new(), |mut memo, record| {
-            let record = record.as_ref();
-            {
-                let amount = memo
-                    .entry(record.creditor.clone())
-                    .or_insert_with(money::zero);
-                *amount = amount.clone() + &record.amount;
-            }
-            memo
-        })
+                let record = record.as_ref();
+                {
+                    let amount = memo
+                        .entry(record.creditor.clone())
+                        .or_insert_with(money::zero);
+                    *amount = amount.clone() + &record.amount;
+                }
+                memo
+            })
     }
 
     fn calc_expenses_per_person_and_group(
@@ -493,6 +499,23 @@ mod tests {
         let actual = stringify(run(to_input("a 33.33 b c\nb 12.33 a c")));
         let expected = stringify(vec![mk_debt("c 22.83 a"), mk_debt("b 4.33 a")]);
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_comment_in_input() {
+        let input = to_input(
+            "
+            d 100 b # ignore this
+            d 200 a
+            # also ignore this
+            d 300 c",
+        );
+        let repay_calc = run(input.clone());
+        let actual = stringify(repay_calc);
+        assert_eq!(
+            actual,
+            ["c owes d 300.00", "a owes d 200.00", "b owes d 100.00"]
+        );
     }
 
     #[test]
